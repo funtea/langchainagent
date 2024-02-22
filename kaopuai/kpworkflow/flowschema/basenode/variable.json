@@ -1,0 +1,30 @@
+{
+  "id":"160557",
+  "type":"11",
+  "meta":{
+    "position":{
+      "x":268.10453053934697,
+      "y":162.03686040782276
+    }
+  },
+  "data":{
+    "nodeMeta":{
+      "title":"Variable",
+      "icon":"https://sf16-va.tiktokcdn.com/obj/eden-va2/dvsmryvd_avi_dvsm/ljhwZthlaukjlkulzlp/icon/icon-Variable.png",
+      "description":"Used for reading and writing variables in your bot. The variable name must match the variable name in Bot.",
+      "subTitle":"Variable"
+    },
+    "inputs":{
+      "mode":"set",
+      "inputParameters":[
+        null
+      ]
+    },
+    "outputs":[
+      {
+        "type":"boolean",
+        "name":"isSuccess"
+      }
+    ]
+  }
+}

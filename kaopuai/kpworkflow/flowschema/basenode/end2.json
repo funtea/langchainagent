@@ -1,0 +1,44 @@
+{
+  "id":"900001",
+  "type":"2",
+  "meta":{
+    "position":{
+      "x":755.5540089163992,
+      "y":-273.225549238879
+    }
+  },
+  "data":{
+    "nodeMeta":{
+      "title":"End",
+      "icon":"https://sf16-va.tiktokcdn.com/obj/eden-va2/dvsmryvd_avi_dvsm/ljhwZthlaukjlkulzlp/icon/icon-End.png",
+      "description":"The final node of the workflow, used to return the result information after the workflow runs.",
+      "subTitle":""
+    },
+    "inputs":{
+      "terminatePlan":"useAnswerContent",
+      "inputParameters":[
+        {
+          "name":"c",
+          "input":{
+            "type":"string",
+            "value":{
+              "type":"ref",
+              "content":{
+                "source":"block-output",
+                "blockID":"100001",
+                "name":"a"
+              }
+            }
+          }
+        }
+      ],
+      "content":{
+        "type":"string",
+        "value":{
+          "type":"literal",
+          "content":"我的content"
+        }
+      }
+    }
+  }
+}

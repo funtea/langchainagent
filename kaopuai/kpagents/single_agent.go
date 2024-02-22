@@ -6,6 +6,7 @@ import (
 	"github.com/tmc/langchaingo/schema"
 )
 
+// SingleAgent 实现了agents.Agent接口
 type SingleAgent struct {
 }
 

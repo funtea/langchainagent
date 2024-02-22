@@ -6,6 +6,7 @@ import (
 	"github.com/tmc/langchaingo/schema"
 )
 
+// MultiAgent
 type MultiAgent struct {
 }
 

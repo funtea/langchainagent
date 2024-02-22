@@ -10,7 +10,8 @@ import (
 	"github.com/tmc/langchaingo/tools"
 )
 
-// 当agent执行器
+// agent执行器
+//
 
 type AgentExecutor struct {
 	Agent     agents.Agent

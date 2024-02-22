@@ -3,11 +3,11 @@ package kpagents
 import (
 	"github.com/tmc/langchaingo/agents"
 	"github.com/tmc/langchaingo/callbacks"
-	"github.com/tmc/langchaingo/kpagents/kpdatabase"
-	"github.com/tmc/langchaingo/kpagents/kpknowledge"
-	"github.com/tmc/langchaingo/kpagents/kpvariable"
-	"github.com/tmc/langchaingo/kpagents/kpworkflow"
-	"github.com/tmc/langchaingo/kpagents/longtermmemory"
+	"github.com/tmc/langchaingo/kaopuai/kpdatabase"
+	"github.com/tmc/langchaingo/kaopuai/kpknowledge"
+	"github.com/tmc/langchaingo/kaopuai/kpvariable"
+	"github.com/tmc/langchaingo/kaopuai/kpworkflow"
+	"github.com/tmc/langchaingo/kaopuai/longtermmemory"
 	"github.com/tmc/langchaingo/prompts"
 	"github.com/tmc/langchaingo/tools"
 )

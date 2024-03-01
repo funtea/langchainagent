@@ -1,0 +1,304 @@
+{
+  "nodes":  [
+    {
+      "id":  "100001",
+      "type":  "1",
+      "meta":  {
+        "position":  {
+          "x":  -819.3697963254239,
+          "y":  -411.65624440949136
+        }
+      },
+      "data":  {
+        "outputs":  [
+          {
+            "type":  "string",
+            "name":  "a",
+            "required":  true,
+            "description":  "参数a"
+          },
+          {
+            "type":  "integer",
+            "name":  "b",
+            "required":  true,
+            "description":  "参数b"
+          },
+          {
+            "type":  "boolean",
+            "name":  "z",
+            "required":  false,
+            "description":  "zzz"
+          },
+          {
+            "type":  "float",
+            "name":  "x",
+            "required":  true,
+            "description":  "xxx"
+          }
+        ],
+        "nodeMeta":  {
+          "title":  "Start",
+          "icon":  "https://sf16-va.tiktokcdn.com/obj/eden-va2/dvsmryvd_avi_dvsm/ljhwZthlaukjlkulzlp/icon/icon-Start.png",
+          "description":  "The starting node of the workflow, used to set the information needed to initiate the workflow.",
+          "subTitle":  ""
+        }
+      }
+    },
+    {
+      "id":  "900001",
+      "type":  "2",
+      "meta":  {
+        "position":  {
+          "x":  1042.8874766175206,
+          "y":  -342.7518870012242
+        }
+      },
+      "data":  {
+        "nodeMeta":  {
+          "title":  "End",
+          "icon":  "https://sf16-va.tiktokcdn.com/obj/eden-va2/dvsmryvd_avi_dvsm/ljhwZthlaukjlkulzlp/icon/icon-End.png",
+          "description":  "The final node of the workflow, used to return the result information after the workflow runs.",
+          "subTitle":  ""
+        },
+        "inputs":  {
+          "terminatePlan":  "useAnswerContent",
+          "inputParameters":  [
+            {
+              "name":  "c",
+              "input":  {
+                "type":  "object",
+                "objectSchema":  [
+                  {
+                    "type":  "list",
+                    "name":  "key4511",
+                    "objectSchema":  {
+                      "type":  "integer"
+                    }
+                  }
+                ],
+                "value":  {
+                  "type":  "ref",
+                  "content":  {
+                    "source":  "block-output",
+                    "blockID":  "120710",
+                    "name":  "key4.0.key45.key451"
+                  }
+                }
+              }
+            }
+          ],
+          "content":  {
+            "type":  "string",
+            "value":  {
+              "type":  "literal",
+              "literalContent":  "我的content"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id":  "117411",
+      "type":  "11",
+      "meta":  {
+        "position":  {
+          "x":  -237.04042005996448,
+          "y":  -307.84672281764773
+        }
+      },
+      "data":  {
+        "nodeMeta":  {
+          "title":  "Variable",
+          "icon":  "https://sf16-va.tiktokcdn.com/obj/eden-va2/dvsmryvd_avi_dvsm/ljhwZthlaukjlkulzlp/icon/icon-Variable.png",
+          "description":  "Used for reading and writing variables in your bot. The variable name must match the variable name in Bot.",
+          "subTitle":  "Variable"
+        },
+        "inputs":  {
+          "mode":  "set",
+          "inputParameters":  [
+            {
+              "name":  "botVariable",
+              "input":  {
+                "type":  "string",
+                "value":  {
+                  "type":  "literal",
+                  "literalContent":  "bbb"
+                }
+              }
+            }
+          ]
+        },
+        "outputs":  [
+          {
+            "type":  "boolean",
+            "name":  "isSuccess"
+          }
+        ]
+      }
+    },
+    {
+      "id":  "120710",
+      "type":  "5",
+      "meta":  {
+        "position":  {
+          "x":  414.02340143315394,
+          "y":  -712.5092562838116
+        }
+      },
+      "data":  {
+        "nodeMeta":  {
+          "title":  "Code",
+          "icon":  "https://sf16-va.tiktokcdn.com/obj/eden-va2/dvsmryvd_avi_dvsm/ljhwZthlaukjlkulzlp/icon/icon-Code.png",
+          "description":  "Write code to process input variables to generate return values.",
+          "subTitle":  "Code"
+        },
+        "inputs":  {
+          "inputParameters":  [
+            {
+              "name":  "input1",
+              "input":  {
+                "type":  "string",
+                "value":  {
+                  "type":  "ref",
+                  "content":  {
+                    "source":  "block-output",
+                    "blockID":  "100001",
+                    "name":  "a"
+                  }
+                }
+              }
+            },
+            {
+              "name":  "input2",
+              "input":  {
+                "type":  "string",
+                "value":  {
+                  "type":  "literal",
+                  "literalContent":  "3232"
+                }
+              }
+            },
+            {
+              "name":  "input3",
+              "input":  {
+                "type":  "boolean",
+                "value":  {
+                  "type":  "ref",
+                  "content":  {
+                    "source":  "block-output",
+                    "blockID":  "117411",
+                    "name":  "isSuccess"
+                  }
+                }
+              }
+            },
+            {
+              "name":  "input4",
+              "input":  {
+                "type":  "integer",
+                "value":  {
+                  "type":  "ref",
+                  "content":  {
+                    "source":  "block-output",
+                    "blockID":  "100001",
+                    "name":  "b"
+                  }
+                }
+              }
+            }
+          ],
+          "code":  " function main({ params }) {\n    const ret = {\n        \"key0\": params.input1 + params.input2,\n        \"key1\": \"\",\n        \"key2\": [\"hello\", \"world\"],\n        \"key3\": {\n            \"key31\": \"hi\"\n        },\n        \"key4\": [{\n            \"key41\": true,\n            \"key42\": 1,\n            \"key43\": 12.88,\n            \"key44\": [\"hello\"],\n            \"key45\": {\n                \"key451\": {\n                    \"key4511\":[1,2,3]\n                }\n            }\n        },{\n            \"key41\": true,\n            \"key42\": 2,\n            \"key43\": 12.88,\n            \"key44\": [\"hello\"],\n            \"key45\": {\n                \"key451\": {\n                    \"key4511\":[1,2,3]\n                }\n            }\n        }]\n    };\n\n    return ret;\n}",
+          "language":  5
+        },
+        "outputs":  [
+          {
+            "type":  "string",
+            "name":  "key0"
+          },
+          {
+            "type":  "string",
+            "name":  "key1"
+          },
+          {
+            "type":  "list",
+            "name":  "key2",
+            "listSchema":  {
+              "type":  "string"
+            }
+          },
+          {
+            "type":  "object",
+            "name":  "key3",
+            "objectSchema":  [
+              {
+                "type":  "string",
+                "name":  "key31"
+              }
+            ]
+          },
+          {
+            "type":  "list",
+            "name":  "key4",
+            "listSchema":  {
+              "type":  "object",
+              "objectSchema":  [
+                {
+                  "type":  "boolean",
+                  "name":  "key41"
+                },
+                {
+                  "type":  "integer",
+                  "name":  "key42"
+                },
+                {
+                  "type":  "float",
+                  "name":  "key43"
+                },
+                {
+                  "type":  "list",
+                  "name":  "key44",
+                  "listSchema":  {
+                    "type":  "string"
+                  }
+                },
+                {
+                  "type":  "object",
+                  "name":  "key45",
+                  "objectSchema":  [
+                    {
+                      "type":  "object",
+                      "name":  "key451",
+                      "objectSchema":  [
+                        {
+                          "type":  "list",
+                          "name":  "key4511",
+                          "listSchema":  {
+                            "type":  "integer"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "edges":  [
+    {
+      "sourceNodeID":  "100001",
+      "targetNodeID":  "117411"
+    },
+    {
+      "sourceNodeID":  "117411",
+      "targetNodeID":  "120710"
+    },
+    {
+      "sourceNodeID":  "120710",
+      "targetNodeID":  "900001"
+    }
+  ]
+}

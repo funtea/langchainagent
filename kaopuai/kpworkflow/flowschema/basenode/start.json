@@ -1,14 +1,13 @@
 {
   "id":"100001",
   "type":"1",
-  "meta":{ //前端存储单元
+  "meta":{
     "position":{
       "x":-631.8697963254239,
       "y":-364.15624440949136
     }
   },
   "data":{
-    //开始节点只有output
     "outputs":[
       {
         "type":"string",
@@ -23,11 +22,11 @@
         "description":"参数b"
       }
     ],
-    "nodeMeta":{//节点属性
+    "nodeMeta":{
       "title":"Start",
       "icon":"https://sf16-va.tiktokcdn.com/obj/eden-va2/dvsmryvd_avi_dvsm/ljhwZthlaukjlkulzlp/icon/icon-Start.png",
       "description":"The starting node of the workflow, used to set the information needed to initiate the workflow.",
-      "subTitle":""//无用
+      "subTitle":""
     }
   }
 }

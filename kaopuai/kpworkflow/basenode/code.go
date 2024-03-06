@@ -26,28 +26,31 @@ func NewCodeNode(node *Node, nodeMap map[string]Node, nodeOutputMap map[string]m
 	return node, nil
 }
 
-func (code *Node) ParseCodeInput(nodeMap map[string]Node, nodeOutputMap map[string]map[string]SchemaOutputs) (err error) {
-	if len(code.Data.Inputs.InputParameters) == 0 {
-		return errors.New("end节点 输入变量不能为空")
+func (node *Node) ParseCodeInput(nodeMap map[string]Node, nodeOutputMap map[string]map[string]SchemaOutputs) (err error) {
+	if len(node.Data.Inputs.InputParameters) == 0 {
+		//参数可以为空
+		return nil
 	}
 
-	for key, inputParameter := range code.Data.Inputs.InputParameters {
+	for key, inputParameter := range node.Data.Inputs.InputParameters {
 		if inputParameter.Input.Value.Type == "ref" {
 			//引用类型
-			nodeId := code.Data.Inputs.InputParameters[key].Input.Value.Content.BlockID
-			varName := code.Data.Inputs.InputParameters[key].Input.Value.Content.Name
+			nodeId := node.Data.Inputs.InputParameters[key].Input.Value.Content.BlockID
+			varName := node.Data.Inputs.InputParameters[key].Input.Value.Content.Name
 			refNode := nodeOutputMap[nodeId]
 
-			if nodeMap[nodeId].Type == TypeCodeNode {
+			if nodeMap[nodeId].Type == TypeCodeNode ||
+				nodeMap[nodeId].Type == TypeLLMNode ||
+				nodeMap[nodeId].Type == TypeKnowledgeNode {
 				//如果是code节点,  只取第一层数据
-				scriptJsonAny := refNode["scriptResultJson"].Value
+				scriptJsonAny := refNode["outputList"].Value
 				scriptJson := scriptJsonAny.(string)
 				codeGjson := gjson.Parse(scriptJson)
 				tmpValue := codeGjson.Get(varName).String()
-				code.Data.Inputs.InputParameters[key].Input.Value.Content.Value = tmpValue
+				node.Data.Inputs.InputParameters[key].Input.Value.Content.Value = tmpValue
 			} else {
 				//todo 检查变量名是否存在  varName
-				code.Data.Inputs.InputParameters[key].Input.Value.Content.Value = refNode[varName].Value
+				node.Data.Inputs.InputParameters[key].Input.Value.Content.Value = refNode[varName].Value
 			}
 		} else if inputParameter.Input.Value.Type == "literal" {
 			//直接使用节点设置的类型值,  自身就是值
@@ -61,7 +64,7 @@ func (code *Node) ParseCodeInput(nodeMap map[string]Node, nodeOutputMap map[stri
 /**
  * nodeOutputMap 其他节点输出的值
  */
-func (code *Node) RunCode(nodeOutputMap map[string]map[string]SchemaOutputs) map[string]map[string]SchemaOutputs {
+func (code *Node) RunCode(nodeOutputMap map[string]map[string]SchemaOutputs) (map[string]map[string]SchemaOutputs, error) {
 	fmt.Printf("%+v", code)
 
 	todoCode := code.Data.Inputs.Code
@@ -70,7 +73,7 @@ func (code *Node) RunCode(nodeOutputMap map[string]map[string]SchemaOutputs) map
 		//javascript
 		javaScriptResult, err := runJavaScript(todoCode, code.Data.Inputs.InputParameters)
 		if err != nil {
-			return nodeOutputMap
+			return nodeOutputMap, err
 		}
 
 		scriptResult = javaScriptResult
@@ -81,22 +84,22 @@ func (code *Node) RunCode(nodeOutputMap map[string]map[string]SchemaOutputs) map
 		//python
 		pythonResult, err := runPython3(todoCode, code.Data.Inputs.InputParameters)
 		if err != nil {
-			return nodeOutputMap
+			return nodeOutputMap, err
 		}
 
 		scriptResult = pythonResult
 	}
 
 	var schemaOutputs = SchemaOutputs{
-		Name:  "scriptResultJson",
+		Name:  "outputList",
 		Value: scriptResult,
 	}
 
 	if _, ok := nodeOutputMap[code.Id]; !ok {
 		nodeOutputMap[code.Id] = make(map[string]SchemaOutputs)
 	}
-	nodeOutputMap[code.Id]["scriptResultJson"] = schemaOutputs
-	return nodeOutputMap
+	nodeOutputMap[code.Id]["outputList"] = schemaOutputs
+	return nodeOutputMap, nil
 }
 
 func runJavaScript(todoCode string, inputParamList []SchemaInputParameters) (string, error) {

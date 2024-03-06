@@ -2,6 +2,7 @@ package basenode
 
 import (
 	"errors"
+	"github.com/tidwall/gjson"
 )
 
 type Variable struct {
@@ -72,17 +73,30 @@ func (node *Node) ParseVariableInput(nodeMap map[string]Node, nodeOutputMap map[
 		return errors.New("variable 输入变量不能为空")
 	}
 
-	if node.Data.Inputs.InputParameters[0].Input.Value.Type == "ref" {
-		//引用类型
-		nodeId := node.Data.Inputs.InputParameters[0].Input.Value.Content.BlockID
-		varName := node.Data.Inputs.InputParameters[0].Input.Value.Content.Name
-		refNode := nodeOutputMap[nodeId]
+	for key, inputParameter := range node.Data.Inputs.InputParameters {
+		if inputParameter.Input.Value.Type == "ref" {
+			//引用类型
+			nodeId := node.Data.Inputs.InputParameters[key].Input.Value.Content.BlockID
+			varName := node.Data.Inputs.InputParameters[key].Input.Value.Content.Name
+			refNode := nodeOutputMap[nodeId]
 
-		//todo 检查变量名是否存在  varName
-		node.Data.Inputs.InputParameters[0].Input.Value.Content.Value = refNode[varName].Value
-	} else if node.Data.Inputs.InputParameters[0].Input.Value.Type == "literal" {
-		//直接使用节点设置的类型值,  自身就是值
-		//node.Data.Inputs.InputParameters[0].Input.Value.LiteralContent
+			if nodeMap[nodeId].Type == TypeCodeNode ||
+				nodeMap[nodeId].Type == TypeLLMNode ||
+				nodeMap[nodeId].Type == TypeKnowledgeNode {
+				//如果是code节点,  只取第一层数据
+				scriptJsonAny := refNode["outputList"].Value
+				scriptJson := scriptJsonAny.(string)
+				codeGjson := gjson.Parse(scriptJson)
+				tmpValue := codeGjson.Get(varName).String()
+				node.Data.Inputs.InputParameters[key].Input.Value.Content.Value = tmpValue
+			} else {
+				//todo 检查变量名是否存在  varName
+				node.Data.Inputs.InputParameters[key].Input.Value.Content.Value = refNode[varName].Value
+			}
+		} else if inputParameter.Input.Value.Type == "literal" {
+			//直接使用节点设置的类型值,  自身就是值
+			//node.Data.Inputs.InputParameters[0].Input.Value.LiteralContent
+		}
 	}
 
 	return nil

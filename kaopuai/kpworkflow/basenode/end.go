@@ -38,9 +38,11 @@ func (node *Node) ParseEndInput(nodeMap map[string]Node, nodeOutputMap map[strin
 			varName := node.Data.Inputs.InputParameters[key].Input.Value.Content.Name
 			refNode := nodeOutputMap[nodeId]
 
-			if nodeMap[nodeId].Type == TypeCodeNode {
+			if nodeMap[nodeId].Type == TypeCodeNode ||
+				nodeMap[nodeId].Type == TypeLLMNode ||
+				nodeMap[nodeId].Type == TypeKnowledgeNode {
 				//如果是code节点,  只取第一层数据
-				scriptJsonAny := refNode["scriptResultJson"].Value
+				scriptJsonAny := refNode["outputList"].Value
 				scriptJson := scriptJsonAny.(string)
 				codeGjson := gjson.Parse(scriptJson)
 				tmpValue := codeGjson.Get(varName).String()

@@ -27,6 +27,16 @@ func TestSchema(t *testing.T) {
 			Name:  "x",
 			Value: 8.5,
 		},
+		"y1": {
+			Type:  "string",
+			Name:  "y1",
+			Value: "nihao",
+		},
+		"y2": {
+			Type:  "string",
+			Name:  "y2",
+			Value: "hello world",
+		},
 	}
 	schemaTest, nodeMap, err := NewSchema("")
 	if err != nil {
@@ -44,6 +54,23 @@ func TestSchema(t *testing.T) {
 	fmt.Printf("startNode 结构体:%+v \r\n", startNode)
 	fmt.Printf("startResult 结构体:%+v \r\n", startResult)
 
+	//查找knowledge节点
+	var knowledgeNode = Node{}
+	for _, tmpNode := range nodeMap {
+		if tmpNode.Type == TypeKnowledgeNode {
+			knowledgeNode = tmpNode
+		}
+	}
+	knowledge, err := NewKnowledgeNode(&knowledgeNode, nodeMap, startResult)
+	if err != nil {
+		return
+	}
+	knowledgeResult, err := knowledge.RunKnowledge(nodeMap, startResult)
+	if err != nil {
+		return
+	}
+	fmt.Printf("%+v", knowledgeResult)
+
 	//查找变量节点
 	var variableNode = Node{}
 	for _, tmpNode := range nodeMap {
@@ -59,7 +86,40 @@ func TestSchema(t *testing.T) {
 	variableResult := variable.RunVariable(startResult)
 	fmt.Printf("%+v", variableResult)
 
-	//查找变量节点
+	//llm节点
+	var llmNode = Node{}
+	for _, tmpNode := range nodeMap {
+		if tmpNode.Type == TypeLLMNode {
+			llmNode = tmpNode
+		}
+	}
+	llm, err := NewLLMNode(&llmNode, variableResult)
+	if err != nil {
+		return
+	}
+	llmResult, err := llm.RunLLM(nodeMap, variableResult)
+	if err != nil {
+		return
+	}
+
+	//condition节点
+	var conditionNode = Node{}
+	for _, tmpNode := range nodeMap {
+		if tmpNode.Type == TypeConditionNode {
+			conditionNode = tmpNode
+		}
+	}
+	condition, err := NewConditionNode(&conditionNode, nodeMap, llmResult)
+	if err != nil {
+		return
+	}
+	isSuccess, _, err := condition.RunCondition(llmResult, nodeMap)
+	if err != nil {
+		return
+	}
+	fmt.Println(isSuccess)
+
+	//查找code节点
 	var codeNode = Node{}
 	for _, tmpNode := range nodeMap {
 		if tmpNode.Type == TypeCodeNode {
@@ -67,13 +127,13 @@ func TestSchema(t *testing.T) {
 		}
 	}
 
-	code, err := NewCodeNode(&codeNode, nodeMap, variableResult)
+	code, err := NewCodeNode(&codeNode, nodeMap, llmResult)
 	if err != nil {
 		return
 	}
 	fmt.Printf("code:%+v", code)
 
-	codeResult := code.RunCode(variableResult)
+	codeResult, err := code.RunCode(variableResult)
 
 	var endNode = Node{}
 	for _, tmpNode := range nodeMap {

@@ -1,6 +1,7 @@
 package basenode
 
 import (
+	"context"
 	"errors"
 	"github.com/tidwall/gjson"
 )
@@ -52,16 +53,17 @@ type ContentData struct {
  *nodeMap        key节点id   value  节点
  *nodeOutputMap  key节点id   value  节点输出的变量值
  */
-func NewVariableNode(node *Node, nodeMap map[string]Node, nodeOutputMap map[string]map[string]SchemaOutputs) (variable *Node, err error) {
+func NewVariableNode(nodeId string, nodeMap map[string]Node, nodeOutputMap map[string]map[string]SchemaOutputs) (variable *Node, err error) {
+	node := nodeMap[nodeId]
 	if node.Type != TypeVariableNode {
 		return variable, errors.New("变量节点类型错误")
 	}
 
-	err = node.ParseVariableInput(nodeMap, nodeOutputMap)
+	err = (&node).ParseVariableInput(nodeMap, nodeOutputMap)
 	if err != nil {
 		return nil, err
 	}
-	return node, nil
+	return &node, nil
 }
 
 func (node *Node) ParseVariableInput(nodeMap map[string]Node, nodeOutputMap map[string]map[string]SchemaOutputs) (err error) {
@@ -103,7 +105,7 @@ func (node *Node) ParseVariableInput(nodeMap map[string]Node, nodeOutputMap map[
 }
 
 // Run方法
-func (variable *Node) RunVariable(nodeOutputMap map[string]map[string]SchemaOutputs) map[string]map[string]SchemaOutputs {
+func (variable *Node) RunVariable(ctx context.Context, nodeOutputMap map[string]map[string]SchemaOutputs) map[string]map[string]SchemaOutputs {
 	if len(variable.Data.Outputs) == 0 {
 		return nodeOutputMap
 	}

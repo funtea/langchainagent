@@ -15,12 +15,13 @@ import (
  *nodeMap        key节点id   value  节点
  *nodeOutputMap  key节点id   value  节点输出的变量值
  */
-func NewLLMNode(node *Node, nodeOutputMap map[string]map[string]SchemaOutputs) (variable *Node, err error) {
+func NewLLMNode(nodeId string, nodeMap map[string]Node) (nodeResult *Node, err error) {
+	node := nodeMap[nodeId]
 	if node.Type != TypeLLMNode {
-		return variable, errors.New("LLM节点类型错误")
+		return nodeResult, errors.New("LLM节点类型错误")
 	}
 
-	return node, nil
+	return &node, nil
 }
 
 func (node *Node) ParseLLMInput(nodeMap map[string]Node, nodeOutputMap map[string]map[string]SchemaOutputs) (err error) {
@@ -54,7 +55,7 @@ func (node *Node) ParseLLMInput(nodeMap map[string]Node, nodeOutputMap map[strin
 }
 
 // Run方法
-func (node *Node) RunLLM(nodeMap map[string]Node, nodeOutputMap map[string]map[string]SchemaOutputs) (nodeOutputMapResult map[string]map[string]SchemaOutputs, err error) {
+func (node *Node) RunLLM(ctx context.Context, nodeMap map[string]Node, nodeOutputMap map[string]map[string]SchemaOutputs) (nodeOutputMapResult map[string]map[string]SchemaOutputs, err error) {
 	err = node.ParseLLMInput(nodeMap, nodeOutputMap)
 	if err != nil {
 		return nodeOutputMap, err

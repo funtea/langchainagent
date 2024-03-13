@@ -1,11 +1,13 @@
 package basenode
 
 import (
+	"context"
 	"fmt"
 	"testing"
 )
 
 func TestSchema(t *testing.T) {
+	ctx := context.Background()
 	var params = map[string]SchemaOutputs{
 		"a": {
 			Type:  "string",
@@ -50,7 +52,7 @@ func TestSchema(t *testing.T) {
 	if err != nil {
 		return
 	}
-	startResult := startNode.RunStart()
+	startResult := startNode.RunStart(ctx)
 	fmt.Printf("startNode 结构体:%+v \r\n", startNode)
 	fmt.Printf("startResult 结构体:%+v \r\n", startResult)
 
@@ -61,11 +63,11 @@ func TestSchema(t *testing.T) {
 			knowledgeNode = tmpNode
 		}
 	}
-	knowledge, err := NewKnowledgeNode(&knowledgeNode, nodeMap, startResult)
+	knowledge, err := NewKnowledgeNode(knowledgeNode.Id, nodeMap)
 	if err != nil {
 		return
 	}
-	knowledgeResult, err := knowledge.RunKnowledge(nodeMap, startResult)
+	knowledgeResult, err := knowledge.RunKnowledge(ctx, nodeMap, startResult)
 	if err != nil {
 		return
 	}
@@ -78,12 +80,12 @@ func TestSchema(t *testing.T) {
 			variableNode = tmpNode
 		}
 	}
-	variable, err := NewVariableNode(&variableNode, nodeMap, startResult)
+	variable, err := NewVariableNode(variableNode.Id, nodeMap, startResult)
 	if err != nil {
 		return
 	}
 
-	variableResult := variable.RunVariable(startResult)
+	variableResult := variable.RunVariable(ctx, startResult)
 	fmt.Printf("%+v", variableResult)
 
 	//llm节点
@@ -93,11 +95,11 @@ func TestSchema(t *testing.T) {
 			llmNode = tmpNode
 		}
 	}
-	llm, err := NewLLMNode(&llmNode, variableResult)
+	llm, err := NewLLMNode(llmNode.Id, nodeMap)
 	if err != nil {
 		return
 	}
-	llmResult, err := llm.RunLLM(nodeMap, variableResult)
+	llmResult, err := llm.RunLLM(ctx, nodeMap, variableResult)
 	if err != nil {
 		return
 	}
@@ -109,11 +111,11 @@ func TestSchema(t *testing.T) {
 			conditionNode = tmpNode
 		}
 	}
-	condition, err := NewConditionNode(&conditionNode, nodeMap, llmResult)
+	condition, err := NewConditionNode(conditionNode.Id, nodeMap, llmResult)
 	if err != nil {
 		return
 	}
-	isSuccess, _, err := condition.RunCondition(llmResult, nodeMap)
+	isSuccess, _, err := condition.RunCondition(ctx, llmResult, nodeMap)
 	if err != nil {
 		return
 	}
@@ -127,13 +129,13 @@ func TestSchema(t *testing.T) {
 		}
 	}
 
-	code, err := NewCodeNode(&codeNode, nodeMap, llmResult)
+	code, err := NewCodeNode(codeNode.Id, nodeMap, llmResult)
 	if err != nil {
 		return
 	}
 	fmt.Printf("code:%+v", code)
 
-	codeResult, err := code.RunCode(variableResult)
+	codeResult, err := code.RunCode(ctx, variableResult)
 
 	var endNode = Node{}
 	for _, tmpNode := range nodeMap {
@@ -142,8 +144,8 @@ func TestSchema(t *testing.T) {
 		}
 	}
 
-	end, err := NewEndNode(&endNode, nodeMap, codeResult)
-	endResult, endContent, err := end.RunEnd()
+	end, err := NewEndNode(endNode.Id, nodeMap, codeResult)
+	endResult, endContent, err := end.RunEnd(ctx)
 	if err != nil {
 		return
 	}

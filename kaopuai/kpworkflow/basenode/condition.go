@@ -1,7 +1,9 @@
 package basenode
 
 import (
+	"context"
 	"errors"
+	"github.com/tidwall/gjson"
 	"strconv"
 	"strings"
 )
@@ -10,16 +12,17 @@ import (
  *nodeMap        key节点id   value  节点
  *nodeOutputMap  key节点id   value  节点输出的变量值
  */
-func NewConditionNode(node *Node, nodeMap map[string]Node, nodeOutputMap map[string]map[string]SchemaOutputs) (condition *Node, err error) {
+func NewConditionNode(nodeId string, nodeMap map[string]Node, nodeOutputMap map[string]map[string]SchemaOutputs) (condition *Node, err error) {
+	node := nodeMap[nodeId]
 	if node.Type != TypeConditionNode {
 		return nil, errors.New("condition节点类型错误")
 	}
 
-	err = node.ParseConditionInput(nodeMap, nodeOutputMap)
+	err = (&node).ParseConditionInput(nodeMap, nodeOutputMap)
 	if err != nil {
 		return nil, err
 	}
-	return node, nil
+	return &node, nil
 }
 
 func (condition *Node) ParseConditionInput(nodeMap map[string]Node, nodeOutputMap map[string]map[string]SchemaOutputs) (err error) {
@@ -27,7 +30,7 @@ func (condition *Node) ParseConditionInput(nodeMap map[string]Node, nodeOutputMa
 	return
 }
 
-func (condition *Node) RunCondition(nodeOutputMap map[string]map[string]SchemaOutputs, nodeMap map[string]Node) (isSuccess bool, nodeId string, err error) {
+func (condition *Node) RunCondition(ctx context.Context, nodeOutputMap map[string]map[string]SchemaOutputs, nodeMap map[string]Node) (isSuccess bool, nodeId string, err error) {
 	if len(condition.Data.Inputs.Branches) == 0 {
 		return false, "", errors.New("condition branches 为空")
 	}
@@ -80,8 +83,12 @@ func dealCondition(condition SchemaConditions, nodeOutputMap map[string]map[stri
 
 	rightBlockID := condition.Right.Input.Value.Content.BlockID
 	rightTmpNodeVariableName := condition.Right.Input.Value.Content.Name
-	leftBlock := getNodeOutput(leftBlockID, leftTmpNodeVariableName, nodeOutputMap, nodeMap)
-	rightBlock := getNodeOutput(rightBlockID, rightTmpNodeVariableName, nodeOutputMap, nodeMap)
+	leftBlock, isLeftJson := getNodeOutput(leftBlockID, leftTmpNodeVariableName, nodeOutputMap, nodeMap)
+	rightBlock, isRightJson := getNodeOutput(rightBlockID, rightTmpNodeVariableName, nodeOutputMap, nodeMap)
+
+	var tmpLeftValue, tmpRightValue any
+	tmpLeftValue = getAnyValueByName(isLeftJson, leftBlock.Value, leftTmpNodeVariableName)
+	tmpRightValue = getAnyValueByName(isRightJson, rightBlock.Value, rightTmpNodeVariableName)
 
 	if condition.Operator == 1 {
 		//equal 是否和输入框内容相等
@@ -89,7 +96,7 @@ func dealCondition(condition SchemaConditions, nodeOutputMap map[string]map[stri
 			return false
 		}
 
-		left, right = getLeftRightEqual(condition, leftBlock, rightBlock)
+		left, right = getLeftRightEqual(condition, tmpLeftValue, tmpRightValue, isLeftJson, isRightJson)
 		if left == right {
 			return true
 		}
@@ -99,49 +106,49 @@ func dealCondition(condition SchemaConditions, nodeOutputMap map[string]map[stri
 			return true
 		}
 
-		left, right = getLeftRightEqual(condition, leftBlock, rightBlock)
+		left, right = getLeftRightEqual(condition, tmpLeftValue, tmpRightValue, isLeftJson, isRightJson)
 		if left != right {
 			return true
 		}
 	} else if condition.Operator == 3 {
 		//longer than
-		isTrue = dealLongerThan(condition, leftBlock, rightBlock, condition.Operator)
+		isTrue = dealLongerThan(condition, tmpLeftValue, tmpRightValue, condition.Operator)
 		return isTrue
 	} else if condition.Operator == 4 {
 		//longer than or equal
-		isTrue = dealLongerThan(condition, leftBlock, rightBlock, condition.Operator)
+		isTrue = dealLongerThan(condition, tmpLeftValue, tmpRightValue, condition.Operator)
 		return isTrue
 	} else if condition.Operator == 5 {
 		//shorter than
-		isTrue = dealLongerThan(condition, leftBlock, rightBlock, condition.Operator)
+		isTrue = dealLongerThan(condition, tmpLeftValue, tmpRightValue, condition.Operator)
 		return isTrue
 	} else if condition.Operator == 6 {
 		//shorter than or equal
-		isTrue = dealLongerThan(condition, leftBlock, rightBlock, condition.Operator)
+		isTrue = dealLongerThan(condition, tmpLeftValue, tmpRightValue, condition.Operator)
 		return isTrue
 	} else if condition.Operator == 7 {
 		//contain
-		isTrue = dealLongerThan(condition, leftBlock, rightBlock, condition.Operator)
+		isTrue = dealLongerThan(condition, tmpLeftValue, tmpRightValue, condition.Operator)
 		return isTrue
 	} else if condition.Operator == 8 {
 		//not contain
-		isTrue = dealLongerThan(condition, leftBlock, rightBlock, condition.Operator)
+		isTrue = dealLongerThan(condition, tmpLeftValue, tmpRightValue, condition.Operator)
 		return isTrue
 	} else if condition.Operator == 9 {
 		//is empty
-		isTrue = isEmpty(condition, leftBlock)
+		isTrue = isEmpty(condition, tmpLeftValue, isLeftJson)
 		return isTrue
 	} else if condition.Operator == 10 {
 		//is not empty
-		isTrue = isEmpty(condition, leftBlock)
+		isTrue = isEmpty(condition, tmpLeftValue, isLeftJson)
 		return !isTrue
 	} else if condition.Operator == 11 {
 		//is true
-		isTrue = dealIsTrue(condition, leftBlock)
+		isTrue = dealIsTrue(condition, tmpLeftValue)
 		return isTrue
 	} else if condition.Operator == 12 {
 		//is false
-		isTrue = dealIsTrue(condition, leftBlock)
+		isTrue = dealIsTrue(condition, tmpLeftValue)
 		return !isTrue
 	} else if condition.Operator == 13 {
 		//greater than  大于
@@ -149,7 +156,7 @@ func dealCondition(condition SchemaConditions, nodeOutputMap map[string]map[stri
 			return false
 		}
 
-		isTrue = dealGreaterThan(condition, leftBlock, rightBlock, condition.Operator)
+		isTrue = dealGreaterThan(condition, tmpLeftValue, tmpRightValue, condition.Operator)
 		return isTrue
 	} else if condition.Operator == 14 {
 		//greater than or equal   大于等于
@@ -158,7 +165,7 @@ func dealCondition(condition SchemaConditions, nodeOutputMap map[string]map[stri
 			return false
 		}
 
-		isTrue = dealGreaterThan(condition, leftBlock, rightBlock, condition.Operator)
+		isTrue = dealGreaterThan(condition, tmpLeftValue, tmpRightValue, condition.Operator)
 		return isTrue
 	} else if condition.Operator == 15 {
 		//less than   小于
@@ -166,7 +173,7 @@ func dealCondition(condition SchemaConditions, nodeOutputMap map[string]map[stri
 			return false
 		}
 
-		isTrue = dealGreaterThan(condition, leftBlock, rightBlock, condition.Operator)
+		isTrue = dealGreaterThan(condition, tmpLeftValue, tmpRightValue, condition.Operator)
 		return isTrue
 	} else if condition.Operator == 16 {
 		//less than or equal  小于等于
@@ -174,44 +181,47 @@ func dealCondition(condition SchemaConditions, nodeOutputMap map[string]map[stri
 			return false
 		}
 
-		isTrue = dealGreaterThan(condition, leftBlock, rightBlock, condition.Operator)
+		isTrue = dealGreaterThan(condition, tmpLeftValue, tmpRightValue, condition.Operator)
 		return isTrue
 	}
 	return false
 }
 
-func getNodeOutput(nodeId, nodeName string, nodeOutputMap map[string]map[string]SchemaOutputs, nodeMap map[string]Node) SchemaOutputs {
+func getNodeOutput(nodeId, nodeName string, nodeOutputMap map[string]map[string]SchemaOutputs, nodeMap map[string]Node) (SchemaOutputs, bool) {
 	if nodeMap[nodeId].Type == TypeCodeNode ||
 		nodeMap[nodeId].Type == TypeLLMNode ||
 		nodeMap[nodeId].Type == TypeKnowledgeNode {
-		return nodeOutputMap[nodeId]["outputList"]
+		return nodeOutputMap[nodeId]["outputList"], true
 	} else {
-		return nodeOutputMap[nodeId][nodeName]
+		return nodeOutputMap[nodeId][nodeName], false
 	}
 
 }
 
-func getLeftRightEqual(condition SchemaConditions, leftBlock, rightBlock SchemaOutputs) (left, right any) {
+func getLeftRightEqual(condition SchemaConditions, tmpLeftValue, tmpRightValue any, isLeftJson, isRightJson bool) (left, right any) {
+
 	if condition.Left.Input.Value.Type == "ref" && condition.Right.Input.Value.Type == "literal" {
 		//左侧使用引用， 右侧直接使用input框内容  nodeOutputMap[leftBlockID][leftTmpNodeVariableName]
-		left, right = dealLeftRightLiteral(condition, leftBlock)
+		left, right = dealLeftRightLiteral(condition, tmpLeftValue, isLeftJson)
 		//left = (nodeOutputMap[blockID][tmpNodeVariableName].Value).(bool)
 	} else if condition.Left.Input.Value.Type == "ref" && condition.Right.Input.Value.Type == "ref" {
 		//左引用  右侧也是引用
-		left, right = dealLeftRightRef(condition, leftBlock, rightBlock)
+		left, right = dealLeftRightRef(condition, tmpLeftValue, tmpRightValue, isLeftJson, isRightJson)
 	}
 	return
 }
 
-func dealLeftRightLiteral(condition SchemaConditions, leftBlock SchemaOutputs) (left, right any) {
-	if condition.Left.Input.Type == "boolean" {
-		left = (leftBlock.Value).(bool)
+func dealLeftRightLiteral(condition SchemaConditions, tmpLeftValue any, isLeftJson bool) (left, right any) {
+	if isLeftJson {
+		left = (tmpLeftValue).(string)
+	} else if condition.Left.Input.Type == "boolean" {
+		left = (tmpLeftValue).(bool)
 	} else if condition.Left.Input.Type == "string" {
-		left = (leftBlock.Value).(string)
+		left = (tmpLeftValue).(string)
 	} else if condition.Left.Input.Type == "integer" {
-		left = (leftBlock.Value).(int64)
+		left = (tmpLeftValue).(int64)
 	} else if condition.Left.Input.Type == "float" {
-		left = (leftBlock.Value).(float64)
+		left = (tmpLeftValue).(float64)
 	}
 
 	if condition.Right.Input.Type == "boolean" {
@@ -230,47 +240,56 @@ func dealLeftRightLiteral(condition SchemaConditions, leftBlock SchemaOutputs) (
 	return
 }
 
-func dealLeftRightRef(condition SchemaConditions, leftBlock, rightBlock SchemaOutputs) (left, right any) {
-	if condition.Left.Input.Type == "boolean" {
-		left = (leftBlock.Value).(bool)
+func dealLeftRightRef(condition SchemaConditions, tmpLeftValue, tmpRightValue any, isLeftJson, isRightJson bool) (left, right any) {
+	if isLeftJson {
+		left = (tmpLeftValue).(string)
+	} else if condition.Left.Input.Type == "boolean" {
+		left = (tmpLeftValue).(bool)
 	} else if condition.Left.Input.Type == "string" {
-		left = (leftBlock.Value).(string)
+		left = (tmpLeftValue).(string)
 	} else if condition.Left.Input.Type == "integer" {
-		left = (leftBlock.Value).(int64)
+		left = (tmpLeftValue).(int64)
 	} else if condition.Left.Input.Type == "float" {
-		left = (leftBlock.Value).(float64)
+		left = (tmpLeftValue).(float64)
 	}
 
-	if condition.Right.Input.Type == "boolean" {
-		right = (rightBlock.Value).(bool)
+	if isRightJson {
+		right = (tmpRightValue).(string)
+	} else if condition.Right.Input.Type == "boolean" {
+		right = (tmpRightValue).(bool)
 	} else if condition.Right.Input.Type == "string" {
-		right = (rightBlock.Value).(string)
+		right = (tmpRightValue).(string)
 	} else if condition.Right.Input.Type == "integer" {
-		right = (rightBlock.Value).(int64)
+		right = (tmpRightValue).(int64)
 	} else if condition.Right.Input.Type == "float" {
-		right = (rightBlock.Value).(float64)
+		right = (tmpRightValue).(float64)
 	}
 	return
 }
 
-func isEmpty(condition SchemaConditions, leftBlock SchemaOutputs) bool {
-	if leftBlock.Value == nil {
+func isEmpty(condition SchemaConditions, tmpLeftValue any, isLeftJson bool) bool {
+	if tmpLeftValue == nil {
 		//	如果是空  则为空
 		return true
 	}
 
-	if leftBlock.Value == "" {
+	if tmpLeftValue == "" {
 		//	如果是空字符串  则为空
 		return true
 	}
 
-	if condition.Left.Input.Type == "boolean" {
-		left := (leftBlock.Value).(bool)
+	if isLeftJson {
+		left := (tmpLeftValue).(string)
+		if len(left) == 0 {
+			return true
+		}
+	} else if condition.Left.Input.Type == "boolean" {
+		left := (tmpLeftValue).(bool)
 		if left != true && left != false {
 			return true
 		}
 	} else if condition.Left.Input.Type == "string" {
-		left := (leftBlock.Value).(string)
+		left := (tmpLeftValue).(string)
 		if len(left) == 0 {
 			return true
 		}
@@ -283,27 +302,27 @@ func isEmpty(condition SchemaConditions, leftBlock SchemaOutputs) bool {
 	return false
 }
 
-func dealGreaterThan(condition SchemaConditions, leftBlock, rightBlock SchemaOutputs, operator int64) (isTrue bool) {
+func dealGreaterThan(condition SchemaConditions, tmpLeftValue, tmpRightValue any, operator int64) (isTrue bool) {
 
 	if condition.Left.Input.Value.Type == "ref" && condition.Right.Input.Value.Type == "literal" {
 		//左侧使用引用， 右侧直接使用input框内容
-		isTrue = dealLeftRightGreaterThanLiteral(condition, leftBlock, operator)
+		isTrue = dealLeftRightGreaterThanLiteral(condition, tmpLeftValue, operator)
 	} else if condition.Left.Input.Value.Type == "ref" && condition.Right.Input.Value.Type == "ref" {
 		//左引用  右侧也是引用
-		isTrue = dealLeftRightGreaterThanRef(condition, leftBlock, rightBlock, operator)
+		isTrue = dealLeftRightGreaterThanRef(condition, tmpLeftValue, tmpRightValue, operator)
 	}
 
 	return isTrue
 }
 
 // integer float 才能使用greater than
-func dealLeftRightGreaterThanLiteral(condition SchemaConditions, leftBlock SchemaOutputs, operator int64) bool {
+func dealLeftRightGreaterThanLiteral(condition SchemaConditions, tmpLeftValue any, operator int64) bool {
 	if condition.Left.Input.Type != "integer" && condition.Left.Input.Type != "float" {
 		return false
 	}
 
 	if condition.Left.Input.Type == "integer" {
-		left := (leftBlock.Value).(int64)
+		left := (tmpLeftValue).(int64)
 
 		rightValue := condition.Right.Input.Value.LiteralContent
 		right, _ := strconv.ParseInt(rightValue, 10, 64)
@@ -327,7 +346,7 @@ func dealLeftRightGreaterThanLiteral(condition SchemaConditions, leftBlock Schem
 		}
 
 	} else if condition.Left.Input.Type == "float" {
-		left := (leftBlock.Value).(float64)
+		left := (tmpLeftValue).(float64)
 
 		rightValue := condition.Right.Input.Value.LiteralContent
 		right, _ := strconv.ParseFloat(rightValue, 64)
@@ -352,10 +371,10 @@ func dealLeftRightGreaterThanLiteral(condition SchemaConditions, leftBlock Schem
 	return false
 }
 
-func dealLeftRightGreaterThanRef(condition SchemaConditions, leftBlock, rightBlock SchemaOutputs, operator int64) bool {
+func dealLeftRightGreaterThanRef(condition SchemaConditions, tmpLeftValue, tmpRightValue any, operator int64) bool {
 	if condition.Left.Input.Type == "integer" {
-		left := (leftBlock.Value).(int64)
-		right := (rightBlock.Value).(int64)
+		left := (tmpLeftValue).(int64)
+		right := (tmpRightValue).(int64)
 		if operator == 13 {
 			if left > right {
 				return true
@@ -374,8 +393,8 @@ func dealLeftRightGreaterThanRef(condition SchemaConditions, leftBlock, rightBlo
 			}
 		}
 	} else if condition.Left.Input.Type == "float" {
-		left := (leftBlock.Value).(float64)
-		right := (rightBlock.Value).(float64)
+		left := (tmpLeftValue).(float64)
+		right := (tmpRightValue).(float64)
 		if operator == 13 {
 			if left > right {
 				return true
@@ -397,19 +416,19 @@ func dealLeftRightGreaterThanRef(condition SchemaConditions, leftBlock, rightBlo
 	return false
 }
 
-func dealIsTrue(condition SchemaConditions, leftBlock SchemaOutputs) bool {
-	if leftBlock.Value == nil {
+func dealIsTrue(condition SchemaConditions, tmpLeftValue any) bool {
+	if tmpLeftValue == nil {
 		//	如果是空  则为空
 		return false
 	}
 
-	if leftBlock.Value == "" {
+	if tmpLeftValue == "" {
 		//	如果是空字符串  则为空
 		return false
 	}
 
 	if condition.Left.Input.Type == "boolean" {
-		left := (leftBlock.Value).(bool)
+		left := (tmpLeftValue).(bool)
 		if left == true {
 			return true
 		}
@@ -418,27 +437,27 @@ func dealIsTrue(condition SchemaConditions, leftBlock SchemaOutputs) bool {
 	return false
 }
 
-func dealLongerThan(condition SchemaConditions, leftBlock, rightBlock SchemaOutputs, operator int64) (isTrue bool) {
+func dealLongerThan(condition SchemaConditions, tmpLeftValue, tmpRightValue any, operator int64) (isTrue bool) {
 
 	if condition.Left.Input.Value.Type == "ref" && condition.Right.Input.Value.Type == "literal" {
 		//左侧使用引用， 右侧直接使用input框内容
-		isTrue = dealLeftRightLongerThanLiteral(condition, leftBlock, operator)
+		isTrue = dealLeftRightLongerThanLiteral(condition, tmpLeftValue, operator)
 	} else if condition.Left.Input.Value.Type == "ref" && condition.Right.Input.Value.Type == "ref" {
 		//左引用  右侧也是引用
-		isTrue = dealLeftRightLongerThanRef(condition, leftBlock, rightBlock, operator)
+		isTrue = dealLeftRightLongerThanRef(condition, tmpLeftValue, tmpRightValue, operator)
 	}
 
 	return isTrue
 }
 
 // string 才能使用greater than
-func dealLeftRightLongerThanLiteral(condition SchemaConditions, leftBlock SchemaOutputs, operator int64) bool {
+func dealLeftRightLongerThanLiteral(condition SchemaConditions, tmpLeftValue any, operator int64) bool {
 	if condition.Left.Input.Type != "string" {
 		return false
 	}
 
 	if condition.Left.Input.Type == "integer" {
-		left := (leftBlock.Value).(string)
+		left := (tmpLeftValue).(string)
 
 		right := condition.Right.Input.Value.LiteralContent
 
@@ -470,10 +489,10 @@ func dealLeftRightLongerThanLiteral(condition SchemaConditions, leftBlock Schema
 	return false
 }
 
-func dealLeftRightLongerThanRef(condition SchemaConditions, leftBlock, rightBlock SchemaOutputs, operator int64) bool {
+func dealLeftRightLongerThanRef(condition SchemaConditions, tmpLeftValue, tmpRightValue any, operator int64) bool {
 	if condition.Left.Input.Type == "string" {
-		left := (leftBlock.Value).(string)
-		right := (rightBlock.Value).(string)
+		left := (tmpLeftValue).(string)
+		right := (tmpRightValue).(string)
 		if operator == 3 {
 			if len(left) > len(right) {
 				return true
@@ -499,4 +518,16 @@ func dealLeftRightLongerThanRef(condition SchemaConditions, leftBlock, rightBloc
 		}
 	}
 	return false
+}
+
+func getAnyValueByName(isLeftJson bool, leftBlockValue any, leftTmpNodeVariableName string) (tmpLeftValue any) {
+	if isLeftJson {
+		scriptJsonAny := leftBlockValue
+		scriptJson := scriptJsonAny.(string)
+		codeGjson := gjson.Parse(scriptJson)
+		tmpLeftValue = codeGjson.Get(leftTmpNodeVariableName).String()
+	} else {
+		tmpLeftValue = leftBlockValue
+	}
+	return
 }

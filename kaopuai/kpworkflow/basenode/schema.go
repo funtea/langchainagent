@@ -10,9 +10,11 @@ const (
 	TypeStartNode     = "1"
 	TypeEndNode       = "2"
 	TypeLLMNode       = "3"
+	TypePluginsNode   = "4"
 	TypeCodeNode      = "5"
 	TypeKnowledgeNode = "6"
 	TypeConditionNode = "8"
+	TypeWorkflowNode  = "9"
 	TypeVariableNode  = "11"
 )
 
@@ -100,6 +102,11 @@ type SchemaInputs struct {
 	Branches        []SchemaBranches        `json:"branches"`      //condition节点
 	LlmParam        []SchemaInputParameters `json:"llmParam"`      //llm节点
 	DatasetParam    []DatasetParam          `json:"datasetParam"`  //knowledge
+	ApiParam        []SchemaInputParameters `json:"apiParam"`      //plugins
+	WorkflowId      string                  `json:"workflowId"`    //workflow
+	SpaceId         string                  `json:"spaceId"`       //workflow
+	InputDefs       []SchemaOutputs         `json:"inputDefs"`     //workflow
+	Type            int64                   `json:"type"`          //workflow
 }
 
 type DatasetParam struct {
@@ -152,12 +159,18 @@ type SchemaContentData struct {
 }
 
 type Edge struct {
-	SourceNodeID string `json:"sourceNodeID"`
-	TargetNodeID string `json:"targetNodeID"`
+	SourceNodeID string `json:"sourceNodeID"`           //起点
+	TargetNodeID string `json:"targetNodeID"`           //下一个
+	SourcePortID string `json:"sourcePortID,omitempty"` //“true” “false”
 }
 
 func NewSchema(schemaJson string) (schema *Schema, nodeMap map[string]Node, err error) {
-	err = json.Unmarshal([]byte(schemaJsonExample), &schema)
+	if len(schemaJson) > 0 {
+		err = json.Unmarshal([]byte(schemaJson), &schema)
+	} else {
+		err = json.Unmarshal([]byte(schemaJsonExample), &schema)
+	}
+
 	if err != nil {
 		fmt.Println(err.Error())
 		return

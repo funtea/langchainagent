@@ -1,6 +1,7 @@
 package basenode
 
 import (
+	"context"
 	"errors"
 	"fmt"
 )
@@ -55,7 +56,7 @@ func (start *Node) ParseStartInputs(params map[string]SchemaOutputs) (err error)
 }
 
 // Run方法
-func (start *Node) RunStart() map[string]map[string]SchemaOutputs {
+func (start *Node) RunStart(ctx context.Context) map[string]map[string]SchemaOutputs {
 	//逻辑处理，因为start逻辑简单，只需要把value提取出来，作为返回参数即可。  其他节点需要参与不同计算得出结果
 	var outputs = make(map[string]map[string]SchemaOutputs)
 	if len(start.Data.Outputs) == 0 {

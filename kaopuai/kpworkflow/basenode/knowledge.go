@@ -1,6 +1,7 @@
 package basenode
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/tidwall/gjson"
@@ -11,12 +12,13 @@ import (
  *nodeMap        key节点id   value  节点
  *nodeOutputMap  key节点id   value  节点输出的变量值
  */
-func NewKnowledgeNode(node *Node, nodeMap map[string]Node, nodeOutputMap map[string]map[string]SchemaOutputs) (variable *Node, err error) {
+func NewKnowledgeNode(nodeId string, nodeMap map[string]Node) (variable *Node, err error) {
+	node := nodeMap[nodeId]
 	if node.Type != TypeKnowledgeNode {
 		return variable, errors.New("Knowledge 节点类型错误")
 	}
 
-	return node, nil
+	return &node, nil
 }
 
 func (node *Node) ParseKnowledgeInput(nodeMap map[string]Node, nodeOutputMap map[string]map[string]SchemaOutputs) (err error) {
@@ -50,7 +52,7 @@ func (node *Node) ParseKnowledgeInput(nodeMap map[string]Node, nodeOutputMap map
 }
 
 // Run方法
-func (node *Node) RunKnowledge(nodeMap map[string]Node, nodeOutputMap map[string]map[string]SchemaOutputs) (nodeOutputMapResult map[string]map[string]SchemaOutputs, err error) {
+func (node *Node) RunKnowledge(ctx context.Context, nodeMap map[string]Node, nodeOutputMap map[string]map[string]SchemaOutputs) (nodeOutputMapResult map[string]map[string]SchemaOutputs, err error) {
 	err = node.ParseKnowledgeInput(nodeMap, nodeOutputMap)
 	if err != nil {
 		return nodeOutputMap, err

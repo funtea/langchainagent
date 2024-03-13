@@ -1,6 +1,7 @@
 package basenode
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,7 +15,8 @@ import (
  *nodeMap        key节点id   value  节点
  *nodeOutputMap  key节点id   value  节点输出的变量值
  */
-func NewCodeNode(node *Node, nodeMap map[string]Node, nodeOutputMap map[string]map[string]SchemaOutputs) (code *Node, err error) {
+func NewCodeNode(nodeId string, nodeMap map[string]Node, nodeOutputMap map[string]map[string]SchemaOutputs) (code *Node, err error) {
+	node := nodeMap[nodeId]
 	if node.Type != TypeCodeNode {
 		return nil, errors.New("code节点类型错误")
 	}
@@ -23,7 +25,7 @@ func NewCodeNode(node *Node, nodeMap map[string]Node, nodeOutputMap map[string]m
 	if err != nil {
 		return nil, err
 	}
-	return node, nil
+	return &node, nil
 }
 
 func (node *Node) ParseCodeInput(nodeMap map[string]Node, nodeOutputMap map[string]map[string]SchemaOutputs) (err error) {
@@ -42,6 +44,11 @@ func (node *Node) ParseCodeInput(nodeMap map[string]Node, nodeOutputMap map[stri
 			if nodeMap[nodeId].Type == TypeCodeNode ||
 				nodeMap[nodeId].Type == TypeLLMNode ||
 				nodeMap[nodeId].Type == TypeKnowledgeNode {
+
+				//if inputParameter.Input.Type == "object" || inputParameter.Input.Type == "list" {
+				//	return errors.New(fmt.Sprintf("参数%s 不能为object或者list", varName))
+				//}
+
 				//如果是code节点,  只取第一层数据
 				scriptJsonAny := refNode["outputList"].Value
 				scriptJson := scriptJsonAny.(string)
@@ -64,7 +71,7 @@ func (node *Node) ParseCodeInput(nodeMap map[string]Node, nodeOutputMap map[stri
 /**
  * nodeOutputMap 其他节点输出的值
  */
-func (code *Node) RunCode(nodeOutputMap map[string]map[string]SchemaOutputs) (map[string]map[string]SchemaOutputs, error) {
+func (code *Node) RunCode(ctx context.Context, nodeOutputMap map[string]map[string]SchemaOutputs) (map[string]map[string]SchemaOutputs, error) {
 	fmt.Printf("%+v", code)
 
 	todoCode := code.Data.Inputs.Code

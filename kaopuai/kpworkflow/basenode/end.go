@@ -1,6 +1,7 @@
 package basenode
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/tidwall/gjson"
@@ -11,16 +12,17 @@ import (
  *nodeMap        key节点id   value  节点
  *nodeOutputMap  key节点id   value  节点输出的变量值
  */
-func NewEndNode(node *Node, nodeMap map[string]Node, nodeOutputMap map[string]map[string]SchemaOutputs) (variable *Node, err error) {
+func NewEndNode(nodeId string, nodeMap map[string]Node, nodeOutputMap map[string]map[string]SchemaOutputs) (variable *Node, err error) {
+	node := nodeMap[nodeId]
 	if node.Type != TypeEndNode {
 		return variable, errors.New("变量节点类型错误")
 	}
 
-	err = node.ParseEndInput(nodeMap, nodeOutputMap)
+	err = (&node).ParseEndInput(nodeMap, nodeOutputMap)
 	if err != nil {
 		return nil, err
 	}
-	return node, nil
+	return &node, nil
 }
 
 /**
@@ -37,6 +39,9 @@ func (node *Node) ParseEndInput(nodeMap map[string]Node, nodeOutputMap map[strin
 			nodeId := node.Data.Inputs.InputParameters[key].Input.Value.Content.BlockID
 			varName := node.Data.Inputs.InputParameters[key].Input.Value.Content.Name
 			refNode := nodeOutputMap[nodeId]
+			if refNode == nil {
+				return errors.New("end节点 ParseEndInput ref报错")
+			}
 
 			if nodeMap[nodeId].Type == TypeCodeNode ||
 				nodeMap[nodeId].Type == TypeLLMNode ||
@@ -61,7 +66,7 @@ func (node *Node) ParseEndInput(nodeMap map[string]Node, nodeOutputMap map[strin
 }
 
 // Run方法
-func (end *Node) RunEnd() (outputVariable, answerContent string, err error) {
+func (end *Node) RunEnd(ctx context.Context) (outputVariable, answerContent string, err error) {
 	if len(end.Data.Inputs.InputParameters) == 0 {
 		return
 	}

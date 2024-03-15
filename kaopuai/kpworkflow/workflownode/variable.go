@@ -1,4 +1,4 @@
-package basenode
+package workflownode
 
 import (
 	"context"
@@ -105,9 +105,10 @@ func (node *Node) ParseVariableInput(nodeMap map[string]Node, nodeOutputMap map[
 }
 
 // Run方法
-func (variable *Node) RunVariable(ctx context.Context, nodeOutputMap map[string]map[string]SchemaOutputs) map[string]map[string]SchemaOutputs {
+func (variable *Node) RunVariable(ctx context.Context, nodeOutputMap map[string]map[string]SchemaOutputs) (nodeOutputMapResult map[string]map[string]SchemaOutputs, resultJson string, err error) {
+	nodeOutputMapResult = nodeOutputMap
 	if len(variable.Data.Outputs) == 0 {
-		return nodeOutputMap
+		return nodeOutputMapResult, "", nil
 	}
 	for _, output := range variable.Data.Outputs {
 		//todo 由于机器人还未搭建，这里设置默认值
@@ -118,5 +119,7 @@ func (variable *Node) RunVariable(ctx context.Context, nodeOutputMap map[string]
 		}
 		nodeOutputMap[variable.Id][output.Name] = output
 	}
-	return nodeOutputMap
+
+	resultJson = getResultJson(variable.Type, variable.Data.Outputs)
+	return nodeOutputMapResult, resultJson, nil
 }

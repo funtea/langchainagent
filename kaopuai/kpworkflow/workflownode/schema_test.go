@@ -1,4 +1,4 @@
-package basenode
+package workflownode
 
 import (
 	"context"
@@ -52,7 +52,7 @@ func TestSchema(t *testing.T) {
 	if err != nil {
 		return
 	}
-	startResult := startNode.RunStart(ctx)
+	startResult, _ := startNode.RunStart(ctx)
 	fmt.Printf("startNode 结构体:%+v \r\n", startNode)
 	fmt.Printf("startResult 结构体:%+v \r\n", startResult)
 
@@ -85,7 +85,7 @@ func TestSchema(t *testing.T) {
 		return
 	}
 
-	variableResult := variable.RunVariable(ctx, startResult)
+	variableResult, _, _ := variable.RunVariable(ctx, startResult)
 	fmt.Printf("%+v", variableResult)
 
 	//llm节点
@@ -99,7 +99,7 @@ func TestSchema(t *testing.T) {
 	if err != nil {
 		return
 	}
-	llmResult, err := llm.RunLLM(ctx, nodeMap, variableResult)
+	llmResult, _, err := llm.RunLLM(ctx, nodeMap, variableResult)
 	if err != nil {
 		return
 	}
@@ -135,7 +135,7 @@ func TestSchema(t *testing.T) {
 	}
 	fmt.Printf("code:%+v", code)
 
-	codeResult, err := code.RunCode(ctx, variableResult)
+	codeResult, _, err := code.RunCode(ctx, variableResult)
 
 	var endNode = Node{}
 	for _, tmpNode := range nodeMap {

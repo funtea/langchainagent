@@ -1,4 +1,4 @@
-package basenode
+package workflownode
 
 import (
 	"context"
@@ -30,7 +30,7 @@ func (condition *Node) ParseConditionInput(nodeMap map[string]Node, nodeOutputMa
 	return
 }
 
-func (condition *Node) RunCondition(ctx context.Context, nodeOutputMap map[string]map[string]SchemaOutputs, nodeMap map[string]Node) (isSuccess bool, nodeId string, err error) {
+func (condition *Node) RunCondition(ctx context.Context, nodeOutputMap map[string]map[string]SchemaOutputs, nodeMap map[string]Node) (isSuccess bool, resultJson string, err error) {
 	if len(condition.Data.Inputs.Branches) == 0 {
 		return false, "", errors.New("condition branches 为空")
 	}
@@ -68,6 +68,16 @@ func (condition *Node) RunCondition(ctx context.Context, nodeOutputMap map[strin
 		}
 	}
 
+	resultJson = condition.getResultJson(isSuccess)
+	return
+}
+
+func (condition *Node) getResultJson(isSuccess bool) (resultJson string) {
+	if isSuccess {
+		resultJson = "{\"result\":\"pass to if branch\"}"
+	} else {
+		resultJson = "{\"result\":\"pass to else branch\"}"
+	}
 	return
 }
 

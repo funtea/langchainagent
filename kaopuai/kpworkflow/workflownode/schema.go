@@ -1,4 +1,4 @@
-package basenode
+package workflownode
 
 import (
 	"encoding/json"
@@ -28,6 +28,13 @@ type Node struct {
 	Type string     `json:"type"`
 	Data SchemaData `json:"data"`
 	//Meta any        `json:"meta"`
+	TestResult TestResult `json:"testResult"`
+}
+
+type TestResult struct {
+	ResultJson     string `json:"resultJson"`
+	OutputVariable string `json:"outputVariable"`
+	AnswerContent  string `json:"answerContent"`
 }
 
 type SchemaData struct {
@@ -45,7 +52,7 @@ type SchemaOutputs struct {
 	Value        any               `json:"value"` //自定义添加的
 	ListSchema   OneOutputSchema   `json:"listSchema"`
 	ObjectSchema []OneOutputSchema `json:"objectSchema"`
-	pathKey      string
+	ResultJson   string            `json:"resultJson"`
 }
 
 type OneOutputSchema struct {

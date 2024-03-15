@@ -1,4 +1,4 @@
-package basenode
+package workflownode
 
 import (
 	"context"
@@ -56,11 +56,12 @@ func (start *Node) ParseStartInputs(params map[string]SchemaOutputs) (err error)
 }
 
 // Run方法
-func (start *Node) RunStart(ctx context.Context) map[string]map[string]SchemaOutputs {
+func (start *Node) RunStart(ctx context.Context) (outputs map[string]map[string]SchemaOutputs, resultJson string) {
 	//逻辑处理，因为start逻辑简单，只需要把value提取出来，作为返回参数即可。  其他节点需要参与不同计算得出结果
-	var outputs = make(map[string]map[string]SchemaOutputs)
+	outputs = make(map[string]map[string]SchemaOutputs)
+
 	if len(start.Data.Outputs) == 0 {
-		return outputs
+		return
 	}
 
 	for _, output := range start.Data.Outputs {
@@ -73,7 +74,8 @@ func (start *Node) RunStart(ctx context.Context) map[string]map[string]SchemaOut
 		outputs[start.Id][output.Name] = output
 	}
 
-	return outputs
+	resultJson = getResultJson(start.Type, start.Data.Outputs)
+	return
 }
 
 var startJsonExample string = "{\"id\":\"100001\",\"type\":\"1\",\"meta\":{\"position\":{\"x\":-631.8697963254239,\"y\":-364.15624440949136}},\"data\":{\"outputs\":[{\"type\":\"string\",\"name\":\"a\",\"required\":true,\"description\":\"参数a\"},{\"type\":\"integer\",\"name\":\"b\",\"required\":true,\"description\":\"参数b\"}],\"nodeMeta\":{\"title\":\"Start\",\"icon\":\"https://sf16-va.tiktokcdn.com/obj/eden-va2/dvsmryvd_avi_dvsm/ljhwZthlaukjlkulzlp/icon/icon-Start.png\",\"description\":\"The starting node of the workflow, used to set the information needed to initiate the workflow.\",\"subTitle\":\"\"}}}"

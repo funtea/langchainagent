@@ -1,4 +1,4 @@
-package basenode
+package workflownode
 
 import (
 	"context"
@@ -55,10 +55,10 @@ func (node *Node) ParseLLMInput(nodeMap map[string]Node, nodeOutputMap map[strin
 }
 
 // Run方法
-func (node *Node) RunLLM(ctx context.Context, nodeMap map[string]Node, nodeOutputMap map[string]map[string]SchemaOutputs) (nodeOutputMapResult map[string]map[string]SchemaOutputs, err error) {
+func (node *Node) RunLLM(ctx context.Context, nodeMap map[string]Node, nodeOutputMap map[string]map[string]SchemaOutputs) (nodeOutputMapResult map[string]map[string]SchemaOutputs, resultJson string, err error) {
 	err = node.ParseLLMInput(nodeMap, nodeOutputMap)
 	if err != nil {
-		return nodeOutputMap, err
+		return nodeOutputMap, "", err
 	}
 
 	//输入参数
@@ -87,7 +87,7 @@ func (node *Node) RunLLM(ctx context.Context, nodeMap map[string]Node, nodeOutpu
 
 	llmResultJson, err := runLLM(promptTemplate, modelType, temperature, templateVariable, replaceVariable)
 	if err != nil {
-		return nil, err
+		return nil, llmResultJson, err
 	}
 
 	var schemaOutputs = SchemaOutputs{
@@ -100,7 +100,7 @@ func (node *Node) RunLLM(ctx context.Context, nodeMap map[string]Node, nodeOutpu
 	}
 	nodeOutputMap[node.Id]["outputList"] = schemaOutputs
 
-	return nodeOutputMap, err
+	return nodeOutputMap, llmResultJson, err
 }
 
 // 模版  llm节点参数

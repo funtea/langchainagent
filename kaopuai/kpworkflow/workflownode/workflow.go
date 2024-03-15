@@ -1,4 +1,4 @@
-package basenode
+package workflownode
 
 import (
 	"context"
@@ -20,32 +20,32 @@ func NewWorkflowNode(nodeId string, nodeMap map[string]Node) (workflow *Node, er
 	return &node, nil
 }
 
-func (node *Node) RunWorkflow(ctx context.Context, nodeMap map[string]Node, nodeOutputMap map[string]map[string]SchemaOutputs) (nodeOutputMapResult map[string]map[string]SchemaOutputs, err error) {
+func (node *Node) RunWorkflow(ctx context.Context, nodeMap map[string]Node, nodeOutputMap map[string]map[string]SchemaOutputs) (nodeOutputMapResult map[string]map[string]SchemaOutputs, resultJson string, err error) {
 	nodeOutputMapResult = nodeOutputMap
 
 	err = node.ParseWorkflowInput(nodeMap, nodeOutputMap)
 	if err != nil {
-		return nodeOutputMapResult, err
+		return nodeOutputMapResult, "", err
 	}
 
 	params, err := getEdgeParams(node)
 	if err != nil {
-		return nodeOutputMapResult, err
+		return nodeOutputMapResult, "", err
 	}
 
 	schemaJson, err := getSchemaJson(node)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
-	workflowResult, err := RunEdges(ctx, schemaJson, params)
+	dealWorkFlowResult, err := RunEdges(ctx, schemaJson, params)
 	if err != nil {
-		return nodeOutputMapResult, err
+		return nodeOutputMapResult, "", err
 	}
 
 	var schemaOutputs = SchemaOutputs{
 		Name:  "output",
-		Value: workflowResult,
+		Value: dealWorkFlowResult.EndNode.TestResult.AnswerContent + dealWorkFlowResult.EndNode.TestResult.OutputVariable,
 	}
 
 	if _, ok := nodeOutputMap[node.Id]; !ok {

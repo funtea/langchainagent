@@ -1,4 +1,4 @@
-package basenode
+package workflownode
 
 import (
 	"context"
@@ -39,7 +39,7 @@ func TestPlugins(t *testing.T) {
 	if err != nil {
 		return
 	}
-	nodeOutputMap := startNode.RunStart(ctx)
+	nodeOutputMap, _ := startNode.RunStart(ctx)
 
 	node1 := schemaStruct.Nodes[2]
 	plugins1, err := NewPluginsNode(node1.Id, nodeMap, nodeOutputMap)
@@ -47,7 +47,7 @@ func TestPlugins(t *testing.T) {
 		return
 	}
 
-	nodeOutputMap, err = plugins1.RunPlugins(ctx, nodeOutputMap, nodeMap)
+	nodeOutputMap, _, err = plugins1.RunPlugins(ctx, nodeOutputMap, nodeMap)
 	if err != nil {
 		return
 	}
@@ -57,7 +57,7 @@ func TestPlugins(t *testing.T) {
 	if err != nil {
 		return
 	}
-	nodeOutputMap, err = plugins2.RunPlugins(ctx, nodeOutputMap, nodeMap)
+	nodeOutputMap, _, err = plugins2.RunPlugins(ctx, nodeOutputMap, nodeMap)
 	if err != nil {
 		return
 	}

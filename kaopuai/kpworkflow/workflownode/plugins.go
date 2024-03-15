@@ -1,4 +1,4 @@
-package basenode
+package workflownode
 
 import (
 	"context"
@@ -59,15 +59,15 @@ func (node *Node) ParsePluginsInput(nodeMap map[string]Node, nodeOutputMap map[s
 	return
 }
 
-func (node *Node) RunPlugins(ctx context.Context, nodeOutputMap map[string]map[string]SchemaOutputs, nodeMap map[string]Node) (nodeOutputMapResult map[string]map[string]SchemaOutputs, err error) {
+func (node *Node) RunPlugins(ctx context.Context, nodeOutputMap map[string]map[string]SchemaOutputs, nodeMap map[string]Node) (nodeOutputMapResult map[string]map[string]SchemaOutputs, resultJson string, err error) {
 	nodeOutputMapResult = nodeOutputMap
 	err = node.ParsePluginsInput(nodeMap, nodeOutputMap)
 	if err != nil {
-		return nodeOutputMapResult, err
+		return nodeOutputMapResult, "", err
 	}
 
 	apiID, apiName, pluginID, pluginName, pluginVersion, tips, outDocLink := parseApiParam(node.Data.Inputs.ApiParam)
-	resultJson, err := dealPlugins(node, apiID, apiName, pluginID, pluginName, pluginVersion, tips, outDocLink)
+	resultJson, err = dealPlugins(node, apiID, apiName, pluginID, pluginName, pluginVersion, tips, outDocLink)
 
 	//整理输出
 	var schemaOutputs = SchemaOutputs{

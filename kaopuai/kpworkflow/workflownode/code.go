@@ -1,4 +1,4 @@
-package basenode
+package workflownode
 
 import (
 	"context"
@@ -71,16 +71,16 @@ func (node *Node) ParseCodeInput(nodeMap map[string]Node, nodeOutputMap map[stri
 /**
  * nodeOutputMap 其他节点输出的值
  */
-func (code *Node) RunCode(ctx context.Context, nodeOutputMap map[string]map[string]SchemaOutputs) (map[string]map[string]SchemaOutputs, error) {
+func (code *Node) RunCode(ctx context.Context, nodeOutputMap map[string]map[string]SchemaOutputs) (nodeOutputMapResult map[string]map[string]SchemaOutputs, resultJson string, err error) {
 	fmt.Printf("%+v", code)
-
+	nodeOutputMapResult = nodeOutputMap
 	todoCode := code.Data.Inputs.Code
 	var scriptResult string
 	if code.Data.Inputs.Language == 5 {
 		//javascript
 		javaScriptResult, err := runJavaScript(todoCode, code.Data.Inputs.InputParameters)
 		if err != nil {
-			return nodeOutputMap, err
+			return nodeOutputMapResult, resultJson, err
 		}
 
 		scriptResult = javaScriptResult
@@ -91,7 +91,7 @@ func (code *Node) RunCode(ctx context.Context, nodeOutputMap map[string]map[stri
 		//python
 		pythonResult, err := runPython3(todoCode, code.Data.Inputs.InputParameters)
 		if err != nil {
-			return nodeOutputMap, err
+			return nodeOutputMap, resultJson, err
 		}
 
 		scriptResult = pythonResult
@@ -106,7 +106,7 @@ func (code *Node) RunCode(ctx context.Context, nodeOutputMap map[string]map[stri
 		nodeOutputMap[code.Id] = make(map[string]SchemaOutputs)
 	}
 	nodeOutputMap[code.Id]["outputList"] = schemaOutputs
-	return nodeOutputMap, nil
+	return nodeOutputMap, resultJson, nil
 }
 
 func runJavaScript(todoCode string, inputParamList []SchemaInputParameters) (string, error) {

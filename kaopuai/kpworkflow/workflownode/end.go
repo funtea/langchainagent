@@ -1,4 +1,4 @@
-package basenode
+package workflownode
 
 import (
 	"context"
@@ -97,6 +97,12 @@ func (end *Node) RunEnd(ctx context.Context) (outputVariable, answerContent stri
 		} else if inputParam.Input.Type == "float" {
 			if inputParam.Input.Value.Type == "ref" {
 				tmpCodeVariable += fmt.Sprintf("%f", inputParam.Input.Value.Content.Value) + `,`
+			} else {
+				tmpCodeVariable += fmt.Sprintf("%s", inputParam.Input.Value.LiteralContent) + `,`
+			}
+		} else if inputParam.Input.Type == "list" {
+			if inputParam.Input.Value.Type == "ref" {
+				tmpCodeVariable += fmt.Sprintf("%s", inputParam.Input.Value.Content.Value) + `,`
 			} else {
 				tmpCodeVariable += fmt.Sprintf("%s", inputParam.Input.Value.LiteralContent) + `,`
 			}
